@@ -1,16 +1,35 @@
 # phoenixcms
 
-A new Flutter project.
+Phoenix CMS
 
-## Getting Started
+## Setup
 
-This project is a starting point for a Flutter application.
+Copy firebaseConfig-template.js as firebaseConfig.js and fill in your Firebase project information
 
-A few resources to get you started if this is your first Flutter project:
+## Update Firestore Rules
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+### Add Rules Function at top
+`    function getPhoenixUser() {
+    	return get(/databases/$(database)/documents/phoenixcms_users/$(request.auth.uid));
+    }`
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Add Rules Needed for Phoenix CMS to function properly
+
+`
+    match /phoenixcms_users/{userId} {
+      allow read: if getPhoenixUser() != null;
+    }
+  	match /phoenixcms_schema/{document=**} {
+      allow read: if getPhoenixUser() != null;
+      allow write: if getPhoenixUser() != null && getPhoenixUser().data.permissionLevel in ["owner", "admin"];
+    }
+`
+
+### Add Rules for any collections you want to add data for (change 'new_collection' to your collection id):
+
+`
+    match /new_collection/{documentId} {
+      allow read: if request.auth.uid != null;
+      allow write: if getPhoenixUser() != null && getPhoenixUser().data.permissionLevel in ["owner", "admin", "editor", "creator"];
+    }
+`
