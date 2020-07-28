@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phoenixcms/dialogs/add_type_dialog.dart';
 import 'package:phoenixcms/models/schema_model.dart';
 import 'package:provider/provider.dart';
 
@@ -56,6 +57,16 @@ class CollectionTypesDetailsScreen extends StatelessWidget {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+          child: const Text('+'),
+          onPressed: () async {
+            await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AddTypeDialog(id);
+              },
+            );
+          }),
     );
   }
 }

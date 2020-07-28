@@ -46,6 +46,25 @@ class SchemaModel extends ChangeNotifier {
     }
   }
 
+  Future<bool> addType(
+      String collectionId, String typeName, String typeId) async {
+    String _typeId = typeId;
+    if (typeId.trim() == '') {
+      _typeId = typeName.paramCase;
+    }
+    try {
+      await firestore
+          .collection('phoenixcms_schema')
+          .document(collectionId)
+          .collection('types')
+          .document(_typeId)
+          .setData({'name': typeName, 'fields': []});
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
   Future<bool> addField(
       String collectionId, String fieldType, List<String> choices) async {
     // TODO ensure this field doesn't conflict with existing name (or typeDataField)
