@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phoenixcms/config/phoenixcms_config.dart';
 import 'package:phoenixcms/menus/phoenixcms_drawer.dart';
 import 'package:phoenixcms/models/schema_model.dart';
 import 'package:phoenixcms/models/user_model.dart';
@@ -31,7 +32,7 @@ class DataOverviewScreen extends StatelessWidget {
                 child: Text(element.collectionName))));
       });
       return Scaffold(
-          appBar: AppBar(title: const Text('Phoenix CMS')),
+          appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
           drawer: PhoenixCMSDrawer(),
           body: Center(
               child: GridView.count(crossAxisCount: 4, children: collections)));

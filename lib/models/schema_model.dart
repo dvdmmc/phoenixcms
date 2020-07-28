@@ -10,18 +10,35 @@ class SchemaModel extends ChangeNotifier {
   String fieldName;
   String firestoreFieldName;
 
+  static const List FIELD_TYPES = <String>[
+    'List',
+    'Map',
+    'Text',
+    'Bool',
+    'Number',
+    'Timestamp',
+    'Type',
+    'Multi',
+    'Single'
+  ];
+
   Future<bool> addCollection(
-      String collectionName, String firestoreName) async {
+      String collectionName, String typeDataField, String firestoreName) async {
     try {
       String _firestoreName = firestoreName;
       if (firestoreName == null || firestoreName.trim() == '') {
         _firestoreName = collectionName.snakeCase;
       }
+      Map<String, dynamic> collectionData = {'name': collectionName};
+      if (typeDataField.trim() != '') {
+        collectionData['typeDataField'] = typeDataField;
+      }
       await firestore
           .collection('phoenixcms_schema')
           .document(_firestoreName)
-          .setData({'name': collectionName});
-      collectionList.add(PhoenixCMSCollection(_firestoreName, collectionName));
+          .setData(collectionData);
+      collectionList.add(
+          PhoenixCMSCollection(_firestoreName, collectionName, typeDataField));
       notifyListeners();
       return true;
     } catch (err) {
@@ -29,7 +46,10 @@ class SchemaModel extends ChangeNotifier {
     }
   }
 
-  Future<bool> addField(String collectionId, String fieldType) async {
+  Future<bool> addField(
+      String collectionId, String fieldType, List<String> choices) async {
+    // TODO ensure this field doesn't conflict with existing name (or typeDataField)
+
     try {
       String _firestoreFieldName = firestoreFieldName;
       if (firestoreFieldName == null || firestoreFieldName.trim() == '') {
@@ -38,6 +58,9 @@ class SchemaModel extends ChangeNotifier {
       Map<String, dynamic> fieldData = {'type': fieldType, 'name': fieldName};
       if (fieldType == "list") {
         fieldData['itemType'] = "text";
+      }
+      if (fieldType == "multi") {
+        fieldData['choices'] = choices;
       }
       await firestore
           .collection('phoenixcms_schema')
@@ -56,8 +79,8 @@ class SchemaModel extends ChangeNotifier {
     QuerySnapshot qs =
         await firestore.collection('phoenixcms_schema').getDocuments();
     qs.documents.forEach((DocumentSnapshot snap) {
-      collectionList
-          .add(PhoenixCMSCollection(snap.documentID, snap.data['name']));
+      collectionList.add(PhoenixCMSCollection(
+          snap.documentID, snap.data['name'], snap.data['typeDataField']));
     });
     notifyListeners();
   }
@@ -69,6 +92,37 @@ class SchemaModel extends ChangeNotifier {
         .snapshots()
         .map<PhoenixCMSCollection>((DocumentSnapshot snap) =>
             PhoenixCMSCollection.fromMap(id, snap.data));
+  }
+
+  Stream<List<PhoenixCMSType>> streamCollectionTypes(String id) {
+    List<PhoenixCMSType> _list = List<PhoenixCMSType>();
+    return firestore
+        .collection('phoenixcms_schema')
+        .document(id)
+        .collection('types')
+        .snapshots()
+        .map((QuerySnapshot event) {
+      event.documentChanges.forEach((DocumentChange docChange) {
+        if (docChange.type == DocumentChangeType.added) {
+          _list.add(PhoenixCMSType.fromMap(
+              docChange.document.documentID, docChange.document.data));
+        } else {
+          int idx = _list.indexWhere((PhoenixCMSType _type) {
+            if (_type.id == docChange.document.documentID) {
+              return true;
+            } else
+              return false;
+          });
+          if (docChange.type == DocumentChangeType.modified) {
+            _list[idx] = PhoenixCMSType.fromMap(
+                docChange.document.documentID, docChange.document.data);
+          } else {
+            _list.removeAt(idx);
+          }
+        }
+      });
+      return _list;
+    });
   }
 
   Stream<List<PhoenixCMSField>> streamCollectionFields(String id) {
@@ -138,8 +192,13 @@ class SchemaModel extends ChangeNotifier {
 'Type'
 */
 
-  Future<bool> saveData(String collectionId, String docId,
-      Map<String, dynamic> formInputs, Map<String, String> fieldTypes) async {
+  Future<bool> saveData(
+      PhoenixCMSCollection collection,
+      String docId,
+      Map<String, dynamic> formInputs,
+      Map<String, String> fieldTypes,
+      Set<String> choices,
+      Map<String, DateTime> selectedDates) async {
     formInputs.forEach((String key, dynamic value) {
       String type = fieldTypes[key];
       switch (type) {
@@ -149,9 +208,9 @@ class SchemaModel extends ChangeNotifier {
           formInputs[key] = int.tryParse(value);
           break;
         case "bool":
-          formInputs[key] = value.toString().toLowerCase() == "true";
           break;
         case "timestamp":
+          formInputs[key] = selectedDates[key];
           break;
         case "type":
           break;
@@ -160,16 +219,19 @@ class SchemaModel extends ChangeNotifier {
         case "list":
           formInputs[key] = [value];
           break;
+        case "multi":
+          formInputs[key] = choices.toList();
+          break;
         default:
           break;
       }
     });
     try {
       if (docId == null) {
-        await firestore.collection(collectionId).add(formInputs);
+        await firestore.collection(collection.id).add(formInputs);
       } else {
         await firestore
-            .collection(collectionId)
+            .collection(collection.id)
             .document(docId)
             .updateData(formInputs);
       }
@@ -178,16 +240,39 @@ class SchemaModel extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<void> updateTypeFieldValue(
+      String collectionId, String typeId, String fieldId, bool value) async {
+    if (value) {
+      await firestore
+          .collection('phoenixcms_schema')
+          .document(collectionId)
+          .collection('types')
+          .document(typeId)
+          .updateData({
+        'fields': FieldValue.arrayUnion([fieldId])
+      });
+    } else {
+      await firestore
+          .collection('phoenixcms_schema')
+          .document(collectionId)
+          .collection('types')
+          .document(typeId)
+          .updateData({
+        'fields': FieldValue.arrayRemove([fieldId])
+      });
+    }
+  }
 }
 
 class PhoenixCMSCollection {
   final String id;
   final String collectionName;
-  // final List<PhoenixCMSField> fields;
+  final String typeDataField;
 
-  PhoenixCMSCollection(this.id, this.collectionName);
+  PhoenixCMSCollection(this.id, this.collectionName, this.typeDataField);
   factory PhoenixCMSCollection.fromMap(String id, Map data) {
-    return PhoenixCMSCollection(id, data['name']);
+    return PhoenixCMSCollection(id, data['name'], data['typeDataField']);
   }
 }
 
@@ -196,10 +281,28 @@ class PhoenixCMSField {
   final String fieldName;
   final String fieldType;
   final String collectionId;
+  final List choices;
 
-  PhoenixCMSField(this.id, this.fieldName, this.fieldType, this.collectionId);
+  PhoenixCMSField(
+      this.id, this.fieldName, this.fieldType, this.collectionId, this.choices);
   factory PhoenixCMSField.fromMap(String id, Map data, String collectionId) {
-    return PhoenixCMSField(id, data['name'], data['type'], collectionId);
+    List choices;
+    if (data['type'] == "multi") {
+      choices = data['choices'];
+    }
+    return PhoenixCMSField(
+        id, data['name'], data['type'], collectionId, choices);
+  }
+}
+
+class PhoenixCMSType {
+  final String id;
+  final List fields;
+  final String name;
+
+  PhoenixCMSType(this.id, this.name, this.fields);
+  factory PhoenixCMSType.fromMap(String id, Map data) {
+    return PhoenixCMSType(id, data['name'], data['fields']);
   }
 }
 

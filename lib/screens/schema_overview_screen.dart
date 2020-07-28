@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phoenixcms/config/phoenixcms_config.dart';
 import 'package:phoenixcms/dialogs/new_collection_dialog.dart';
 import 'package:phoenixcms/menus/phoenixcms_drawer.dart';
 import 'package:phoenixcms/models/schema_model.dart';
@@ -21,6 +22,12 @@ class SchemaOverviewScreen extends StatelessWidget {
                 child: Text("Need to login in order to access this page")),
           );
         }
+        if (!user.phxUser.isAllowed("admin")) {
+          Navigator.of(context).popAndPushNamed('/home');
+          return Scaffold(
+            body: Center(child: Text("Insufficient user permission")),
+          );
+        }
         return Consumer<SchemaModel>(
             builder: (BuildContext context, SchemaModel schema, Widget child) {
           List<Widget> collections = List<Widget>();
@@ -35,7 +42,7 @@ class SchemaOverviewScreen extends StatelessWidget {
                     child: Text(element.collectionName))));
           });
           return Scaffold(
-              appBar: AppBar(title: const Text('Phoenix CMS')),
+              appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
               drawer: PhoenixCMSDrawer(),
               floatingActionButton: FloatingActionButton(
                 onPressed: () async {

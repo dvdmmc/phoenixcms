@@ -1,9 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:phoenixcms/models/user_model.dart';
 import 'package:phoenixcms/screens/collection_details_screen.dart';
-import 'package:phoenixcms/screens/data_entry_screen.dart';
+import 'package:phoenixcms/screens/collection_types_details_screen.dart';
 import 'package:phoenixcms/screens/data_list_screen.dart';
 import 'package:phoenixcms/screens/data_overview_screen.dart';
 import 'package:phoenixcms/screens/home_screen.dart';
@@ -11,6 +10,7 @@ import 'package:phoenixcms/screens/login_screen.dart';
 import 'package:phoenixcms/screens/schema_overview_screen.dart';
 import 'package:provider/provider.dart';
 
+import 'config/phoenixcms_config.dart';
 import 'models/app_model.dart';
 import 'models/schema_model.dart';
 
@@ -18,7 +18,6 @@ final FirebaseAuth auth = FirebaseAuth.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FirebaseApp defaultApp = await FirebaseApp.instance;
   FirebaseUser currentUser = await auth.currentUser();
   runApp(MultiProvider(
     child: PhoenixCMSApp(initialRoute: currentUser == null ? '/' : '/home'),
@@ -51,10 +50,11 @@ class PhoenixCMSApp extends StatelessWidget {
             CollectionDetailsScreen(),
         SchemaOverviewScreen.routeName: (context) => SchemaOverviewScreen(),
         DataOverviewScreen.routeName: (context) => DataOverviewScreen(),
-        DataEntryScreen.routeName: (context) => DataEntryScreen(),
-        DataListScreen.routeName: (context) => DataListScreen()
+        DataListScreen.routeName: (context) => DataListScreen(),
+        CollectionTypesDetailsScreen.routeName: (context) =>
+            CollectionTypesDetailsScreen()
       },
-      title: 'Phoenix CMS',
+      title: PHOENIXCMS_TITLE,
       theme: ThemeData(
         // This is the theme of your application.
         //

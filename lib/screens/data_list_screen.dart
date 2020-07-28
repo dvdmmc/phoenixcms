@@ -1,4 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:phoenixcms/config/phoenixcms_config.dart';
 import 'package:phoenixcms/dialogs/data_entry_dialog.dart';
 import 'package:phoenixcms/menus/phoenixcms_drawer.dart';
 import 'package:phoenixcms/models/schema_model.dart';
@@ -23,43 +26,49 @@ class DataListScreen extends StatelessWidget {
           );
         }
         return StreamBuilder(
-            stream: schema.streamCollectionFields(id),
-            builder: (BuildContext context,
-                AsyncSnapshot<List<PhoenixCMSField>> fields) {
-              if (!fields.hasData) {
-                return Center(child: Text("Loading data..."));
-              }
-              return StreamBuilder(
-                  stream: schema.streamCollectionData(id),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<List<PhoenixCMSDocument>> snapshot) {
-                    if (!snapshot.hasData) {
-                      return Center(child: Text("Loading data..."));
-                    }
-                    return Scaffold(
-                      appBar: AppBar(title: const Text('Phoenix CMS')),
-                      drawer: PhoenixCMSDrawer(),
-                      body: Center(
-                          child:
-                              dataToTable(context, fields.data, snapshot.data)),
-                      floatingActionButton: FloatingActionButton(
-                          onPressed: () async {
-                            await showDialog(
-                                context: context,
-                                builder: (BuildContext context) {
-                                  return DataEntryDialog(id, null, null);
-                                });
-                          },
-                          child: const Text('+')),
-                    );
-                  });
-            });
+          stream: schema.streamCollectionSchema(id),
+          builder: (context, AsyncSnapshot<PhoenixCMSCollection> collection) {
+            return StreamBuilder(
+                stream: schema.streamCollectionFields(id),
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<PhoenixCMSField>> fields) {
+                  if (!collection.hasData || !fields.hasData) {
+                    return Center(child: Text("Loading data..."));
+                  }
+                  return StreamBuilder(
+                      stream: schema.streamCollectionData(id),
+                      builder: (BuildContext context,
+                          AsyncSnapshot<List<PhoenixCMSDocument>> snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(child: Text("Loading data..."));
+                        }
+                        return Scaffold(
+                          appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
+                          drawer: PhoenixCMSDrawer(),
+                          body: Center(
+                              child: dataToTable(context, fields.data,
+                                  snapshot.data, collection.data)),
+                          floatingActionButton: FloatingActionButton(
+                              onPressed: () async {
+                                await showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return DataEntryDialog(
+                                          collection.data, null, null);
+                                    });
+                              },
+                              child: const Text('+')),
+                        );
+                      });
+                });
+          },
+        );
       },
     );
   }
 
   DataTable dataToTable(BuildContext context, List<PhoenixCMSField> fields,
-      List<PhoenixCMSDocument> docs) {
+      List<PhoenixCMSDocument> docs, PhoenixCMSCollection collection) {
     fields.sort((PhoenixCMSField fieldA, PhoenixCMSField fieldB) =>
         fieldA.id.compareTo(fieldB.id));
     List columns = List<DataColumn>();
@@ -72,7 +81,13 @@ class DataListScreen extends StatelessWidget {
       List cells = List<DataCell>();
       fields.forEach((PhoenixCMSField element) {
         if (doc.data[element.id] != null) {
-          cells.add(DataCell(Text(doc.data[element.id].toString())));
+          if (element.fieldType == "timestamp") {
+            cells.add(DataCell(Text(DateFormat.yMd()
+                .add_Hm()
+                .format(doc.data[element.id].toDate()))));
+          } else {
+            cells.add(DataCell(Text(doc.data[element.id].toString())));
+          }
         } else {
           cells.add(DataCell.empty);
         }
@@ -81,7 +96,7 @@ class DataListScreen extends StatelessWidget {
         await showDialog(
             context: context,
             builder: (BuildContext context) {
-              return DataEntryDialog(doc.collectionId, doc.id, doc.data);
+              return DataEntryDialog(collection, doc.id, doc.data);
             });
       }));
       rows.add(DataRow(cells: cells));

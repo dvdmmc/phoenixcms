@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:phoenixcms/dialogs/new_collection_dialog.dart';
+import 'package:phoenixcms/config/phoenixcms_config.dart';
 import 'package:phoenixcms/menus/phoenixcms_drawer.dart';
-import 'package:phoenixcms/models/schema_model.dart';
 import 'package:phoenixcms/models/user_model.dart';
-import 'package:phoenixcms/screens/collection_details_screen.dart';
 import 'package:phoenixcms/screens/schema_overview_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -22,24 +20,36 @@ class HomeScreen extends StatelessWidget {
           );
         }
         return Scaffold(
-            appBar: AppBar(title: const Text('Phoenix CMS')),
+            appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
             drawer: PhoenixCMSDrawer(),
             body: Center(
-                child: GridView.count(
-              crossAxisCount: 4,
+                child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                RaisedButton(
-                    child: Text("Data"),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                          context, DataOverviewScreen.routeName);
-                    }),
-                RaisedButton(
-                    child: Text("Schema"),
-                    onPressed: () {
-                      Navigator.pushNamed(
-                          context, SchemaOverviewScreen.routeName);
-                    })
+                Container(
+                  height: 150,
+                  width: 150,
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      child: Text("Data"),
+                      onPressed: () {
+                        Navigator.pushNamed(
+                            context, DataOverviewScreen.routeName);
+                      }),
+                ),
+                Container(
+                  height: 150,
+                  width: 150,
+                  padding: const EdgeInsets.all(8.0),
+                  child: RaisedButton(
+                      child: Text("Schema"),
+                      onPressed: user.phxUser.isAllowed("admin")
+                          ? () {
+                              Navigator.pushNamed(
+                                  context, SchemaOverviewScreen.routeName);
+                            }
+                          : null),
+                )
               ],
             )));
       },

@@ -5,6 +5,14 @@ import 'package:flutter/material.dart';
 final FirebaseAuth auth = FirebaseAuth.instance;
 final Firestore firestore = Firestore.instance;
 
+const Map<String, int> PHOENIXCMS_PERMISSION_LEVELS = {
+  'owner': 5,
+  'admin': 4,
+  'editor': 3,
+  'creator': 2,
+  'viewer': 1
+};
+
 class UserModel extends ChangeNotifier {
   FirebaseUser _user;
   FirebaseUser get user => _user;
@@ -39,4 +47,11 @@ class PhoenixCMSUser {
   final String uid;
   final String permissionLevel;
   PhoenixCMSUser(this.uid, this.permissionLevel) {}
+  bool isAllowed(String permissionLevel) {
+    if (PHOENIXCMS_PERMISSION_LEVELS[this.permissionLevel] >=
+        PHOENIXCMS_PERMISSION_LEVELS[permissionLevel]) {
+      return true;
+    } else
+      return false;
+  }
 }

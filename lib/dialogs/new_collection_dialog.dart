@@ -11,6 +11,7 @@ class NewCollectionDialog extends StatefulWidget {
 
 class NewCollectionDialogState extends State<NewCollectionDialog> {
   String collectionName = '';
+  String typeDataField = '';
   String firestoreName;
 
   @override
@@ -22,6 +23,12 @@ class NewCollectionDialogState extends State<NewCollectionDialog> {
         TextField(
           onChanged: (String value) {
             collectionName = value;
+          },
+        ),
+        Text('Type Data Field'),
+        TextField(
+          onChanged: (String value) {
+            typeDataField = value;
           },
         ),
         Text('Firestore Collection (or leave blank to use default'),
@@ -43,7 +50,8 @@ class NewCollectionDialogState extends State<NewCollectionDialog> {
                 return RaisedButton(
                     child: Text('Add'),
                     onPressed: () {
-                      schema.addCollection(collectionName, firestoreName);
+                      schema.addCollection(
+                          collectionName, typeDataField, firestoreName);
                       Navigator.pop(context);
                     });
               },
