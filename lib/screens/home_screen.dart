@@ -30,25 +30,33 @@ class HomeScreen extends StatelessWidget {
                   height: 150,
                   width: 150,
                   padding: const EdgeInsets.all(8.0),
-                  child: RaisedButton(
-                      child: Text("Data"),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                            context, DataOverviewScreen.routeName);
-                      }),
+                  child: ButtonTheme(
+                    minWidth: 150,
+                    height: 150,
+                    child: RaisedButton(
+                        child: Text("Data"),
+                        onPressed: () {
+                          Navigator.pushNamed(
+                              context, DataOverviewScreen.routeName);
+                        }),
+                  ),
                 ),
                 Container(
                   height: 150,
                   width: 150,
                   padding: const EdgeInsets.all(8.0),
-                  child: RaisedButton(
-                      child: Text("Schema"),
-                      onPressed: user.phxUser.isAllowed("admin")
-                          ? () {
-                              Navigator.pushNamed(
-                                  context, SchemaOverviewScreen.routeName);
-                            }
-                          : null),
+                  child: ButtonTheme(
+                    minWidth: 150,
+                    height: 150,
+                    child: RaisedButton(
+                        child: Text("Schema"),
+                        onPressed: user.phxUser.isAllowed("admin")
+                            ? () {
+                                Navigator.pushNamed(
+                                    context, SchemaOverviewScreen.routeName);
+                              }
+                            : null),
+                  ),
                 )
               ],
             )));

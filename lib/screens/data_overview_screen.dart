@@ -24,18 +24,25 @@ class DataOverviewScreen extends StatelessWidget {
       List<Widget> collections = List<Widget>();
       schema.collectionList.forEach((PhoenixCMSCollection element) {
         collections.add(Center(
-            child: RaisedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, DataListScreen.routeName,
-                      arguments: {'id': element.id});
-                },
-                child: Text(element.collectionName))));
+            child: ButtonTheme(
+          minWidth: 150,
+          height: 150,
+          child: RaisedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, DataListScreen.routeName,
+                    arguments: {'id': element.id});
+              },
+              child: Text(element.collectionName)),
+        )));
       });
       return Scaffold(
           appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
           drawer: PhoenixCMSDrawer(),
           body: Center(
-              child: GridView.count(crossAxisCount: 4, children: collections)));
+              child: Container(
+                  margin: EdgeInsets.all(200),
+                  child: GridView.count(
+                      crossAxisCount: 4, children: collections))));
     });
   }
 }

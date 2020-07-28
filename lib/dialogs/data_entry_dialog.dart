@@ -44,11 +44,15 @@ class DataEntryDialogState extends State<DataEntryDialog> {
                 ];
               } else {
                 _children = [
-                  DataEntryForm(
-                      collection, fields.data, types.data, docId, docData)
+                  Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: DataEntryForm(
+                        collection, fields.data, types.data, docId, docData),
+                  )
                 ];
               }
               return SimpleDialog(
+                title: Text("Add an item:"),
                 children: _children,
               );
             },

@@ -33,14 +33,16 @@ class DataListScreen extends StatelessWidget {
                 builder: (BuildContext context,
                     AsyncSnapshot<List<PhoenixCMSField>> fields) {
                   if (!collection.hasData || !fields.hasData) {
-                    return Center(child: Text("Loading data..."));
+                    return Scaffold(
+                        body: Center(child: Text("Loading data...")));
                   }
                   return StreamBuilder(
                       stream: schema.streamCollectionData(id),
                       builder: (BuildContext context,
                           AsyncSnapshot<List<PhoenixCMSDocument>> snapshot) {
                         if (!snapshot.hasData) {
-                          return Center(child: Text("Loading data..."));
+                          return Scaffold(
+                              body: Center(child: Text("Loading data...")));
                         }
                         return Scaffold(
                           appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
@@ -85,6 +87,8 @@ class DataListScreen extends StatelessWidget {
             cells.add(DataCell(Text(DateFormat.yMd()
                 .add_Hm()
                 .format(doc.data[element.id].toDate()))));
+          } else if (element.fieldType == "multi") {
+            cells.add(DataCell(Text(doc.data[element.id].join(", "))));
           } else {
             cells.add(DataCell(Text(doc.data[element.id].toString())));
           }
