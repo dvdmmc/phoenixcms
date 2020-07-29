@@ -205,7 +205,6 @@ class CollectionDetailsState extends State<CollectionDetailsScreen> {
                                                       setState(() {
                                                         _fieldType = null;
                                                       });
-                                                      ;
                                                       Navigator.pop(context);
                                                     }),
                                                 RaisedButton(

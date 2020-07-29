@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:phoenixcms/config/phoenixcms_config.dart';
@@ -47,18 +46,37 @@ class DataListScreen extends StatelessWidget {
                         return Scaffold(
                           appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
                           drawer: PhoenixCMSDrawer(),
-                          body: Center(
-                              child: dataToTable(context, fields.data,
-                                  snapshot.data, collection.data)),
+                          body: Container(
+                              margin: EdgeInsets.all(200),
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(24.0),
+                                    child: Center(
+                                      child: Text(
+                                        collection.data.collectionName,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline4,
+                                      ),
+                                    ),
+                                  ),
+                                  dataToTable(context, fields.data,
+                                      snapshot.data, collection.data),
+                                ],
+                              )),
                           floatingActionButton: FloatingActionButton(
-                              onPressed: () async {
-                                await showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return DataEntryDialog(
-                                          collection.data, null, null);
-                                    });
-                              },
+                              onPressed: user.phxUser
+                                      .isAllowed(collection.data.createLevel)
+                                  ? () async {
+                                      await showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return DataEntryDialog(
+                                                collection.data, null, null);
+                                          });
+                                    }
+                                  : null,
                               child: const Text('+')),
                         );
                       });

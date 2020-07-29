@@ -29,7 +29,11 @@ class SchemaModel extends ChangeNotifier {
       if (firestoreName == null || firestoreName.trim() == '') {
         _firestoreName = collectionName.snakeCase;
       }
-      Map<String, dynamic> collectionData = {'name': collectionName};
+      // TODO allow user override of create level
+      Map<String, dynamic> collectionData = {
+        'name': collectionName,
+        'createLevel': "creator"
+      };
       if (typeDataField.trim() != '') {
         collectionData['typeDataField'] = typeDataField;
       }
@@ -37,8 +41,8 @@ class SchemaModel extends ChangeNotifier {
           .collection('phoenixcms_schema')
           .document(_firestoreName)
           .setData(collectionData);
-      collectionList.add(
-          PhoenixCMSCollection(_firestoreName, collectionName, typeDataField));
+      collectionList.add(PhoenixCMSCollection(_firestoreName, collectionName,
+          typeDataField, "creator")); // TODO allow user override of creator
       notifyListeners();
       return true;
     } catch (err) {
@@ -99,7 +103,10 @@ class SchemaModel extends ChangeNotifier {
         await firestore.collection('phoenixcms_schema').getDocuments();
     qs.documents.forEach((DocumentSnapshot snap) {
       collectionList.add(PhoenixCMSCollection(
-          snap.documentID, snap.data['name'], snap.data['typeDataField']));
+          snap.documentID,
+          snap.data['name'],
+          snap.data['typeDataField'],
+          snap.data['createLevel']));
     });
     notifyListeners();
   }
@@ -288,10 +295,13 @@ class PhoenixCMSCollection {
   final String id;
   final String collectionName;
   final String typeDataField;
+  final String createLevel;
 
-  PhoenixCMSCollection(this.id, this.collectionName, this.typeDataField);
+  PhoenixCMSCollection(
+      this.id, this.collectionName, this.typeDataField, this.createLevel);
   factory PhoenixCMSCollection.fromMap(String id, Map data) {
-    return PhoenixCMSCollection(id, data['name'], data['typeDataField']);
+    return PhoenixCMSCollection(
+        id, data['name'], data['typeDataField'], data['createLevel']);
   }
 }
 

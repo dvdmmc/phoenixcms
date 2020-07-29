@@ -46,7 +46,7 @@ class UserModel extends ChangeNotifier {
 class PhoenixCMSUser {
   final String uid;
   final String permissionLevel;
-  PhoenixCMSUser(this.uid, this.permissionLevel) {}
+  PhoenixCMSUser(this.uid, this.permissionLevel);
   bool isAllowed(String permissionLevel) {
     if (PHOENIXCMS_PERMISSION_LEVELS[this.permissionLevel] >=
         PHOENIXCMS_PERMISSION_LEVELS[permissionLevel]) {
