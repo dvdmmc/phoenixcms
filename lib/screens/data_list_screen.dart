@@ -46,25 +46,27 @@ class DataListScreen extends StatelessWidget {
                         return Scaffold(
                           appBar: AppBar(title: const Text(PHOENIXCMS_TITLE)),
                           drawer: PhoenixCMSDrawer(),
-                          body: Container(
-                              margin: EdgeInsets.all(200),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(24.0),
-                                    child: Center(
-                                      child: Text(
-                                        collection.data.collectionName,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline4,
+                          body: SingleChildScrollView(
+                            child: Container(
+                                margin: EdgeInsets.all(200),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(24.0),
+                                      child: Center(
+                                        child: Text(
+                                          collection.data.collectionName,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headline4,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  dataToTable(context, fields.data,
-                                      snapshot.data, collection.data),
-                                ],
-                              )),
+                                    dataToTable(context, fields.data,
+                                        snapshot.data, collection.data),
+                                  ],
+                                )),
+                          ),
                           floatingActionButton: FloatingActionButton(
                               onPressed: user.phxUser
                                       .isAllowed(collection.data.createLevel)
@@ -87,8 +89,11 @@ class DataListScreen extends StatelessWidget {
     );
   }
 
-  DataTable dataToTable(BuildContext context, List<PhoenixCMSField> fields,
-      List<PhoenixCMSDocument> docs, PhoenixCMSCollection collection) {
+  SingleChildScrollView dataToTable(
+      BuildContext context,
+      List<PhoenixCMSField> fields,
+      List<PhoenixCMSDocument> docs,
+      PhoenixCMSCollection collection) {
     fields.sort((PhoenixCMSField fieldA, PhoenixCMSField fieldB) =>
         fieldA.id.compareTo(fieldB.id));
     List columns = List<DataColumn>();
@@ -123,6 +128,8 @@ class DataListScreen extends StatelessWidget {
       }));
       rows.add(DataRow(cells: cells));
     });
-    return DataTable(columns: columns, rows: rows);
+    return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(columns: columns, rows: rows));
   }
 }

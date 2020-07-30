@@ -54,7 +54,7 @@ class SchemaModel extends ChangeNotifier {
       String collectionId, String typeName, String typeId) async {
     String _typeId = typeId;
     if (typeId.trim() == '') {
-      _typeId = typeName.paramCase;
+      _typeId = typeName.camelCase;
     }
     try {
       await firestore
