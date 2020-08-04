@@ -7,8 +7,20 @@ import 'package:phoenixcms/models/schema_model.dart';
 import 'package:phoenixcms/models/user_model.dart';
 import 'package:provider/provider.dart';
 
-class DataListScreen extends StatelessWidget {
+class DataListScreen extends StatefulWidget {
   static const routeName = '/data-list';
+
+  @override
+  State<StatefulWidget> createState() {
+    return DataListScreenState();
+  }
+}
+
+class DataListScreenState extends State<DataListScreen> {
+  int sortColumnIndex = 0;
+  bool ascending = true;
+  String sortFieldId;
+
   @override
   Widget build(BuildContext context) {
     Map<String, String> args =
@@ -48,7 +60,7 @@ class DataListScreen extends StatelessWidget {
                           drawer: PhoenixCMSDrawer(),
                           body: SingleChildScrollView(
                             child: Container(
-                                margin: EdgeInsets.all(200),
+                                margin: EdgeInsets.all(50),
                                 child: Column(
                                   children: [
                                     Padding(
@@ -94,14 +106,34 @@ class DataListScreen extends StatelessWidget {
       List<PhoenixCMSField> fields,
       List<PhoenixCMSDocument> docs,
       PhoenixCMSCollection collection) {
-    fields.sort((PhoenixCMSField fieldA, PhoenixCMSField fieldB) =>
-        fieldA.id.compareTo(fieldB.id));
     List columns = List<DataColumn>();
     fields.forEach((PhoenixCMSField field) {
-      columns.add(DataColumn(label: Text(field.fieldName)));
+      columns.add(DataColumn(
+          onSort: (int columnIndex, bool asc) {
+            setState(() {
+              sortColumnIndex = fields.indexWhere((PhoenixCMSField element) {
+                if (element.id == field.id) return true;
+                return false;
+              });
+              sortFieldId = field.id;
+              ascending = asc;
+            });
+          },
+          label: Text(field.fieldName)));
     });
     columns.add(DataColumn(label: Text('')));
-    List rows = List<DataRow>();
+    List<DataRow> rows = [];
+    docs.sort((PhoenixCMSDocument docA, PhoenixCMSDocument docB) {
+      if (ascending) {
+        return docA.data[sortFieldId]
+            .toString()
+            .compareTo(docB.data[sortFieldId].toString());
+      } else {
+        return docB.data[sortFieldId]
+            .toString()
+            .compareTo(docA.data[sortFieldId].toString());
+      }
+    });
     docs.forEach((PhoenixCMSDocument doc) {
       List cells = List<DataCell>();
       fields.forEach((PhoenixCMSField element) {
@@ -113,7 +145,8 @@ class DataListScreen extends StatelessWidget {
           } else if (element.fieldType == "multi") {
             cells.add(DataCell(Text(doc.data[element.id].join(", "))));
           } else {
-            cells.add(DataCell(Text(doc.data[element.id].toString())));
+            cells.add(DataCell(Container(
+                width: 75, child: Text(doc.data[element.id].toString()))));
           }
         } else {
           cells.add(DataCell.empty);
@@ -130,6 +163,10 @@ class DataListScreen extends StatelessWidget {
     });
     return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: DataTable(columns: columns, rows: rows));
+        child: DataTable(
+            sortAscending: ascending,
+            sortColumnIndex: sortColumnIndex,
+            columns: columns,
+            rows: rows));
   }
 }
