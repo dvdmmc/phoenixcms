@@ -1,7 +1,13 @@
+import 'dart:html';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:phoenixcms/models/schema_model.dart';
 import 'package:provider/provider.dart';
+
+import 'package:firebase/firebase.dart' as fb;
+import 'package:mime_type/mime_type.dart';
 
 class DataEntryForm extends StatefulWidget {
   final PhoenixCMSCollection collection;
@@ -32,6 +38,8 @@ class DataEntryFormState extends State<DataEntryForm> {
   Map<String, DateTime> selectedDates = {};
   PhoenixCMSType _selectedType;
 
+  Map<String, Image> _images = {};
+
   DataEntryFormState(
       this.collection, this.fields, this.types, this.docId, this.docData);
   @override
@@ -50,8 +58,9 @@ class DataEntryFormState extends State<DataEntryForm> {
             if (success) {
               Navigator.pop(context);
             } else {
-              Scaffold.of(context)
-                  .showSnackBar(SnackBar(content: Text('Form error...')));
+              // TODO Handle Form Error
+              // Scaffold.of(context)
+              //     .showSnackBar(SnackBar(content: Text('Form error...')));
             }
           },
           child: Text("Submit"),
@@ -67,7 +76,7 @@ class DataEntryFormState extends State<DataEntryForm> {
 
   List<Widget> fieldsToFormFields(List<PhoenixCMSField> fields,
       List<PhoenixCMSType> types, PhoenixCMSCollection collection) {
-    List _list = List<Widget>();
+    List<Widget> _list = [];
     if (types.length > 0) {
       if (_selectedType == null) {
         if (docData != null && docData.containsKey(collection.typeDataField)) {
@@ -124,6 +133,27 @@ class DataEntryFormState extends State<DataEntryForm> {
             formInputs.remove(_field.id);
           }
 
+          break;
+        case ("image"):
+          if (_selectedType == null ||
+              _selectedType.fields.contains(_field.id)) {
+            if (docData != null && docData.containsKey(_field.id)) {
+              formInputs[_field.id] = docData[_field.id];
+              _images[_field.id] = Image.network(_iv);
+            }
+            if (formInputs[_field.id] != null) {
+              _list.add(Container(
+                  child: _images[_field.id], height: 200, width: 200));
+            }
+            _list.add(RaisedButton(
+              child: Text('Choose Image'),
+              onPressed: () {
+                _startFilePicker(_field.id);
+              },
+            ));
+          } else {
+            formInputs.remove(_field.id);
+          }
           break;
         case ("bool"):
           if (_selectedType == null ||
@@ -278,5 +308,47 @@ class DataEntryFormState extends State<DataEntryForm> {
       }
     });
     return _list;
+  }
+
+  _startFilePicker(String fieldId) async {
+    InputElement uploadInput = FileUploadInputElement();
+    uploadInput.click();
+
+    uploadInput.onChange.listen((e) {
+      // read file content as dataURL
+      final files = uploadInput.files;
+      if (files.length == 1) {
+        final file = files[0];
+        FileReader reader = FileReader();
+
+        reader.onLoadEnd.listen((e) {
+          fb.StorageReference ref =
+              fb.storage().ref('/phoenix_cms/images/${file.name}');
+          fb.UploadTask task = ref.put(
+              reader.result, fb.UploadMetadata(contentType: mime(file.name)));
+          task.future.then((fb.UploadTaskSnapshot _snap) {
+            ref.getDownloadURL().then((Uri uri) {
+              setState(() {
+                // uploadedImage = reader.result;
+                _images[fieldId] = Image.network(uri.toString());
+                formInputs[fieldId] = uri.toString();
+                if (docData != null && docData.containsKey(fieldId)) {
+                  docData[fieldId] = uri.toString();
+                }
+              });
+            });
+          }).catchError((err) {
+            // TODO handle error
+            print(err.toString());
+          });
+        });
+
+        reader.onError.listen((fileEvent) {
+          // TODO handle error
+        });
+
+        reader.readAsArrayBuffer(file);
+      }
+    });
   }
 }

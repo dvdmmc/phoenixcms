@@ -51,7 +51,9 @@ class DataListScreenState extends State<DataListScreen> {
                       stream: schema.streamCollectionData(id),
                       builder: (BuildContext context,
                           AsyncSnapshot<List<PhoenixCMSDocument>> snapshot) {
-                        if (!snapshot.hasData) {
+                        if (!snapshot.hasData &&
+                            snapshot.connectionState !=
+                                ConnectionState.active) {
                           return Scaffold(
                               body: Center(child: Text("Loading data...")));
                         }
@@ -123,44 +125,53 @@ class DataListScreenState extends State<DataListScreen> {
     });
     columns.add(DataColumn(label: Text('')));
     List<DataRow> rows = [];
-    docs.sort((PhoenixCMSDocument docA, PhoenixCMSDocument docB) {
-      if (ascending) {
-        return docA.data[sortFieldId]
-            .toString()
-            .compareTo(docB.data[sortFieldId].toString());
-      } else {
-        return docB.data[sortFieldId]
-            .toString()
-            .compareTo(docA.data[sortFieldId].toString());
-      }
-    });
-    docs.forEach((PhoenixCMSDocument doc) {
-      List cells = List<DataCell>();
-      fields.forEach((PhoenixCMSField element) {
-        if (doc.data[element.id] != null) {
-          if (element.fieldType == "timestamp") {
-            cells.add(DataCell(Text(DateFormat.yMd()
-                .add_Hm()
-                .format(doc.data[element.id].toDate()))));
-          } else if (element.fieldType == "multi") {
-            cells.add(DataCell(Text(doc.data[element.id].join(", "))));
-          } else {
-            cells.add(DataCell(Container(
-                width: 75, child: Text(doc.data[element.id].toString()))));
-          }
+    if (docs != null) {
+      docs.sort((PhoenixCMSDocument docA, PhoenixCMSDocument docB) {
+        if (ascending) {
+          return docA.data[sortFieldId]
+              .toString()
+              .compareTo(docB.data[sortFieldId].toString());
         } else {
-          cells.add(DataCell.empty);
+          return docB.data[sortFieldId]
+              .toString()
+              .compareTo(docA.data[sortFieldId].toString());
         }
       });
-      cells.add(DataCell(Text("Edit"), onTap: () async {
-        await showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return DataEntryDialog(collection, doc.id, doc.data);
-            });
-      }));
-      rows.add(DataRow(cells: cells));
-    });
+      docs.forEach((PhoenixCMSDocument doc) {
+        List cells = List<DataCell>();
+        fields.forEach((PhoenixCMSField element) {
+          if (doc.data[element.id] != null) {
+            if (element.fieldType == "timestamp") {
+              cells.add(DataCell(Text(DateFormat.yMd()
+                  .add_Hm()
+                  .format(doc.data[element.id].toDate()))));
+            } else if (element.fieldType == "multi") {
+              cells.add(DataCell(Text(doc.data[element.id].join(", "))));
+            } else if (element.fieldType == 'image') {
+              cells.add(DataCell(Container(
+                  padding: EdgeInsets.all(10),
+                  child: Image.network(doc.data[element.id]),
+                  height: 200,
+                  width: 200)));
+            } else {
+              cells.add(DataCell(Container(
+                  width: 75, child: Text(doc.data[element.id].toString()))));
+            }
+          } else {
+            cells.add(DataCell.empty);
+          }
+        });
+        cells.add(DataCell(Text("Edit"), onTap: () async {
+          await showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return DataEntryDialog(collection, doc.id, doc.data);
+              });
+        }));
+        rows.add(DataRow(cells: cells));
+      });
+    }
+
     return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(

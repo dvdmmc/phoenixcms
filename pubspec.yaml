@@ -42,6 +42,13 @@ dependencies:
 
   # intl library
   intl: ^0.16.1
+
+  # html for file input
+  html: ^0.14.0+3
+
+  # mime_type detection
+  mime_type: ^0.3.2
+
   
 dev_dependencies:
   flutter_test:

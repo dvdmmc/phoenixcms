@@ -19,7 +19,8 @@ class SchemaModel extends ChangeNotifier {
     'Timestamp',
     'Type',
     'Multi',
-    'Single'
+    'Single',
+    'Image'
   ];
 
   Future<bool> addCollection(

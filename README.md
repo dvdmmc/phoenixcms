@@ -33,3 +33,9 @@ Copy firebaseConfig-template.js as firebaseConfig.js and fill in your Firebase p
       allow write: if getPhoenixUser() != null && getPhoenixUser().data.permissionLevel in ["owner", "admin", "editor", "creator"];
     }
 `
+
+# run 
+`flutter run --debug -d chrome`
+
+# build
+`flutter build -v web`
